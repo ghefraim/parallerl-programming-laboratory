@@ -3,19 +3,6 @@ using System.Diagnostics;
 
 internal class Program
 {
-  public static void CriptareThread(object? param)
-  {
-    var parameters = (ThreadParams)param;
-    Console.WriteLine("Aceasta este thread-ul de criptare!");
-
-    string result = CriptareDecriptare.Criptare(parameters.Text);
-
-    parameters.EncryptedText(result);
-    parameters.Signal.Set();
-
-    Debug.Print($"[Encryption Thread] Text criptat: {result}");
-  }
-
   private static void Main(string[] args)
   {
     string text = string.Empty;
@@ -27,30 +14,31 @@ internal class Program
 
     ManualResetEvent encryptionDone = new ManualResetEvent(false);
 
-    Thread encryptionThread = new Thread(new ParameterizedThreadStart(CriptareThread));
-    encryptionThread.Name = "EncryptionThread";
-    encryptionThread.Priority = ThreadPriority.Normal;
-
-    Debug.Print($"[Encryption Thread] Nume: {encryptionThread.Name}, Prioritate: {encryptionThread.Priority}, Stare: {encryptionThread.ThreadState}");
-    // encryptionThread.Start(new ThreadParams { Text = text, EncryptedText = (result) => encryptedText = (string)result, Signal = encryptionDone });
-
-    Thread decryptionThread = new Thread(() =>
+    var threadParams = new ThreadParams
     {
-      encryptionDone.WaitOne();
+      Text = text,
+      EncryptedText = (result) => encryptedText = result,
+      EncryptedTextData = encryptedText,
+      DecryptedText = (result) => decryptedText = result,
+      DecryptedTextData = decryptedText,
+      Signal = encryptionDone
+    };
 
-      Console.WriteLine("Acesta este thread-ul de decriptare!");
+    CancellationTokenSource ctokens = new CancellationTokenSource();
+    threadParams.Token = ctokens.Token;
 
-      string result = CriptareDecriptare.Decriptare(encryptedText);
+    ThreadPool.QueueUserWorkItem(CriptareDecriptare.CriptareThreadPool, threadParams);
 
-      Debug.Print($"[Decryption Thread] Text decriptat: {result}");
-    });
+    ManualResetEvent finalEvent = new ManualResetEvent(false);
+    threadParams.FinalSignal = finalEvent;
+    ThreadPool.QueueUserWorkItem(CriptareDecriptare.DecriptareThreadPool, threadParams);
 
-    decryptionThread.Name = "DecryptionThread";
-    decryptionThread.Priority = ThreadPriority.Normal;
+    Console.WriteLine("Apasati o tasta pentru a întrerupe criptarea...");
+    Console.ReadKey();
+    ctokens.Cancel();
 
-    Debug.Print($"[Decryption Thread] Nume: {decryptionThread.Name}, Prioritate: {decryptionThread.Priority}, Stare: {decryptionThread.ThreadState}, IsBackground = {decryptionThread.IsBackground}");
-
-    decryptionThread.Start();
-    encryptionThread.Start(new ThreadParams { Text = text, EncryptedText = (result) => encryptedText = (string)result, Signal = encryptionDone });
+    finalEvent.WaitOne();
+    Console.WriteLine($"\nEncrypted text: {encryptedText}");
+    Console.WriteLine($"Decrypted text: {decryptedText}");
   }
 }
