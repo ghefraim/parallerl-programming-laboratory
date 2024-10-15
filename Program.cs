@@ -32,7 +32,6 @@ internal class Program
     encryptionThread.Priority = ThreadPriority.Normal;
 
     Debug.Print($"[Encryption Thread] Nume: {encryptionThread.Name}, Prioritate: {encryptionThread.Priority}, Stare: {encryptionThread.ThreadState}");
-    // encryptionThread.Start(new ThreadParams { Text = text, EncryptedText = (result) => encryptedText = (string)result, Signal = encryptionDone });
 
     Thread decryptionThread = new Thread(() =>
     {
