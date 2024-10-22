@@ -12,5 +12,5 @@ foreach (Thread t in threads)
   t.Join();
 }
 
-Console.WriteLine($"Sold final: {cont.Sold} RON");
-Console.WriteLine($"Numar total de retrageri efectuate cu succes: {cont.NumarDeRetrageri}.");
+Console.WriteLine($"Sold final: {cont.GetSold()} RON");
+Console.WriteLine($"Număr total de retrageri efectuate cu succes: {cont.GetNumarDeRetrageri()}");

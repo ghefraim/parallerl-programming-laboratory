@@ -3,50 +3,61 @@ using System.Threading;
 
 class Cont
 {
-  public long Sold { get; set; }
-
-  public int NumarDeRetrageri { get; set; }
-
-  private readonly object lockObj = new object();
-
+  private long sold;
+  private int numarDeRetrageri = 0;
   private Random r = new Random();
 
   public Cont(long soldInitial)
   {
-    Sold = soldInitial;
+    sold = soldInitial;
   }
 
   public long Retrage(long suma)
   {
-    lock (lockObj)
+    long soldCurent;
+    do
     {
-      if (Sold == 0)
+      soldCurent = Interlocked.Read(ref sold);
+
+      if (soldCurent < suma)
       {
-        Console.WriteLine("Soldul este zero. Nu se pot efectua retrageri.");
+        Console.WriteLine($"Fonduri insuficiente pentru retragerea de {suma} RON. Sold actual: {soldCurent} RON.");
         return 0;
       }
-      if (Sold >= suma)
-      {
-        Sold -= suma;
-        NumarDeRetrageri++;
-        Console.WriteLine($"Retragere de {suma} RON reusita. Sold ramas: {Sold} RON.");
-        return suma;
-      }
-      else
-      {
-        Console.WriteLine($"Fonduri insuficiente pentru retragerea de {suma} RON. Sold actual: {Sold} RON.");
-        return 0;
-      }
-    }
+
+    } while (Interlocked.CompareExchange(ref sold, soldCurent - suma, soldCurent) != soldCurent);
+
+    Interlocked.Increment(ref numarDeRetrageri);
+    Console.WriteLine($"Retragere de {suma} RON reușită. Sold rămas: {soldCurent - suma} RON.");
+    return suma;
   }
 
   public void Tranzactii()
   {
     for (int i = 0; i < 20; i++)
     {
+      long soldCurent = Interlocked.Read(ref sold);
+
+      // Oprire dacă soldul este zero sau negativ
+      if (soldCurent <= 0)
+      {
+        Console.WriteLine("Nu mai sunt fonduri disponibile. Oprire tranzacții.");
+        break;
+      }
+
       long sumaDeRetras = r.Next(1, 100);
       Retrage(sumaDeRetras);
-      Thread.Sleep(100);
+      Thread.Sleep(r.Next(50, 200));
     }
+  }
+
+  public int GetNumarDeRetrageri()
+  {
+    return Interlocked.CompareExchange(ref numarDeRetrageri, 0, 0);
+  }
+
+  public long GetSold()
+  {
+    return Interlocked.Read(ref sold);
   }
 }
