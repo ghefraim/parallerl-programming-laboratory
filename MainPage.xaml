@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="YourApp.MainPage">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="25" Padding="30,0" VerticalOptions="Center">
+
+            <Label 
+                Text="Aplicatie Criptare/Decriptare"
+                SemanticProperties.HeadingLevel="Level1"
+                FontSize="32"
+                HorizontalOptions="Center" />
+
+            <Label 
+                Text="Mesaj original"
+                FontSize="18"/>
+
+            <Editor
+                x:Name="OriginalMessage"
+                HeightRequest="100"
+                Placeholder="Introduceți textul original aici..."
+                AutoSize="TextChanges"/>
+
+            <Label 
+                Text="Mesaj criptat"
+                FontSize="18"/>
+
+            <Editor
+                x:Name="EncryptedMessage"
+                HeightRequest="100"
+                IsReadOnly="True"/>
+
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                <Button
+                    x:Name="ExecutaButton"
+                    Text="Executa"
+                    SemanticProperties.Hint="Criptează mesajul fără thread-uri"
+                    Clicked="OnExecutaClicked"
+                    HorizontalOptions="Center" />
+
+                <Button
+                    x:Name="ExecutaThreadButton"
+                    Text="Executa in Thread"
+                    SemanticProperties.Hint="Criptează mesajul folosind thread-uri"
+                    Clicked="OnExecutaThreadClicked"
+                    HorizontalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <Label 
+                x:Name="ExecutionTime"
+                Text="Timp de executie: "
+                FontSize="14"
+                HorizontalOptions="Center"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
