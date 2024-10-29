@@ -27,11 +27,12 @@ public partial class MainPage : ContentPage
     private async void OnExecutaThreadClicked(object sender, EventArgs e)
     {
         var stopwatch = Stopwatch.StartNew();
-        string originalText = OriginalMessage.Text ?? string.Empty;
+        string originalText = OriginalMessage.Text ?? string.Empty; 
+        
+        int numberOfCores = Environment.ProcessorCount;
 
         string encryptedText = await Task.Run(() =>
         {
-            int numberOfCores = Environment.ProcessorCount;
 
             if (string.IsNullOrEmpty(originalText))
                 return string.Empty;
@@ -71,6 +72,6 @@ public partial class MainPage : ContentPage
         stopwatch.Stop();
 
         EncryptedMessage.Text = encryptedText;
-        ExecutionTime.Text = $"Timp de executie: {stopwatch.ElapsedMilliseconds}ms";
+        ExecutionTime.Text = $"Timp de executie: {stopwatch.ElapsedMilliseconds}ms pe {numberOfCores} thread-uri ";
     }
 }

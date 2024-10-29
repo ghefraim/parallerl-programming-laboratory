@@ -14,7 +14,7 @@ public class CriptareDecriptare
 
         for (int i = 0; i <= (text.Length - 1); i++)
         {
-            Thread.Sleep(100);
+            Thread.Sleep(10);
             randomChar = (char)(rand.Next(128));
             encryptedText += ((char)(text[i] ^ randomChar)).ToString();
             encryptedText += ((char)(randomChar ^ (128 - i))).ToString();

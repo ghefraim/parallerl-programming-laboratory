@@ -41,7 +41,7 @@
 
                 <Button
                     x:Name="ExecutaThreadButton"
-                    Text="Executa in Thread"
+                    Text="Executa multi-thread"
                     SemanticProperties.Hint="Criptează mesajul folosind thread-uri"
                     Clicked="OnExecutaThreadClicked"
                     HorizontalOptions="Center" />
