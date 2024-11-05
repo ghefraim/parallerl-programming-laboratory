@@ -7,43 +7,70 @@
         <VerticalStackLayout Spacing="25" Padding="30,0" VerticalOptions="Center">
 
             <Label 
-                Text="Aplicatie Criptare/Decriptare"
+                Text="Aplicatie Criptare/Decriptare cu TPL"
                 SemanticProperties.HeadingLevel="Level1"
                 FontSize="32"
                 HorizontalOptions="Center" />
 
             <Label 
-                Text="Mesaj original"
+                Text="Text de procesat (introduceți mai multe linii)"
                 FontSize="18"/>
 
-            <Editor
-                x:Name="OriginalMessage"
-                HeightRequest="100"
-                Placeholder="Introduceți textul original aici..."
-                AutoSize="TextChanges"/>
+            <Border Stroke="Gray"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 5">
+                <ScrollView HeightRequest="150">
+                    <Editor
+                        x:Name="OriginalMessage"
+                        AutoSize="TextChanges"
+                        Margin="5"
+                        Placeholder="Introduceți textul pe mai multe linii...&#x0a;Fiecare linie va fi procesată separat..."/>
+                </ScrollView>
+            </Border>
 
             <Label 
-                Text="Mesaj criptat"
+                Text="Text procesat"
                 FontSize="18"/>
 
-            <Editor
-                x:Name="EncryptedMessage"
-                HeightRequest="100"
-                IsReadOnly="True"/>
+            <Border Stroke="Gray"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 5">
+                <ScrollView HeightRequest="150">
+                    <Editor
+                        x:Name="EncryptedMessage"
+                        IsReadOnly="False"
+                        Margin="5"
+                        TextColor="Black"
+                        BackgroundColor="White"/>
+                </ScrollView>
+            </Border>
+
+            <ProgressBar 
+                x:Name="ProcessingProgress"
+                Progress="0"
+                HeightRequest="10"
+                WidthRequest="200"
+                HorizontalOptions="Center" />
+
+            <Label 
+                x:Name="ProgressText"
+                Text="Progres: 0%"
+                FontSize="14"
+                HorizontalOptions="Center"/>
 
             <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
                 <Button
-                    x:Name="ExecutaButton"
-                    Text="Executa"
-                    SemanticProperties.Hint="Criptează mesajul fără thread-uri"
-                    Clicked="OnExecutaClicked"
+                    x:Name="CriptareButton"
+                    Text="Criptare TPL"
+                    SemanticProperties.Hint="Criptează textul folosind Task Parallel Library"
+                    Clicked="OnCriptareClicked"
                     HorizontalOptions="Center" />
 
                 <Button
-                    x:Name="ExecutaThreadButton"
-                    Text="Executa multi-thread"
-                    SemanticProperties.Hint="Criptează mesajul folosind thread-uri"
-                    Clicked="OnExecutaThreadClicked"
+                    x:Name="DecriptareButton"
+                    Text="Decriptare TPL"
+                    SemanticProperties.Hint="Decriptează textul folosind Task Parallel Library"
+                    Clicked="OnDecriptareClicked"
                     HorizontalOptions="Center" />
             </HorizontalStackLayout>
 
