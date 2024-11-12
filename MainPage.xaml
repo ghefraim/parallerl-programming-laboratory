@@ -38,10 +38,8 @@
                 <ScrollView HeightRequest="150">
                     <Editor
                         x:Name="EncryptedMessage"
-                        IsReadOnly="False"
-                        Margin="5"
-                        TextColor="Black"
-                        BackgroundColor="White"/>
+                        AutoSize="TextChanges"
+                        Margin="5"/>
                 </ScrollView>
             </Border>
 
@@ -71,6 +69,13 @@
                     Text="Decriptare TPL"
                     SemanticProperties.Hint="Decriptează textul folosind Task Parallel Library"
                     Clicked="OnDecriptareClicked"
+                    HorizontalOptions="Center" />
+
+                <Button
+                    x:Name="CancelButton"
+                    Text="Anulează"
+                    IsEnabled="False"
+                    Clicked="OnCancelClicked"
                     HorizontalOptions="Center" />
             </HorizontalStackLayout>
 
