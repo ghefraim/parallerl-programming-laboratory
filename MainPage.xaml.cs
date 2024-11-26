@@ -41,12 +41,136 @@ public partial class MainPage : ContentPage
 
     private async void OnCriptareClicked(object sender, EventArgs e)
     {
-        await ProcessText(true);
+        Debug.Print($"Thread ID principal: {Thread.CurrentThread.ManagedThreadId}");
+
+        var text = OriginalMessage.Text ?? string.Empty;
+        if (string.IsNullOrEmpty(text)) return;
+
+        tokenSource = new CancellationTokenSource();
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            CriptareButton.IsEnabled = false;
+            DecriptareButton.IsEnabled = false;
+            CancelButton.IsEnabled = true;
+
+            ProcessingProgress.Progress = 0;
+            ProgressText.Text = "Progres: 0%";
+
+            var lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            var processedLines = new List<string>();
+            var totalLines = lines.Length;
+            var processedCount = 0;
+
+            foreach (var line in lines)
+            {
+                if (string.IsNullOrEmpty(line)) continue;
+
+                try
+                {
+                    var processedLine = await CriptareDecriptare.Criptare(line, tokenSource.Token);
+                    processedLines.Add(processedLine);
+
+                    processedCount++;
+                    var progress = (double)processedCount / totalLines;
+                    ProcessingProgress.Progress = progress;
+                    ProgressText.Text = $"Progres: {progress:P0}";
+                }
+                catch (OperationCanceledException)
+                {
+                    processedLines.Add("[Operație anulată]");
+                    throw;
+                }
+            }
+
+            EncryptedMessage.Text = string.Join(Environment.NewLine, processedLines);
+        }
+        catch (OperationCanceledException)
+        {
+            EncryptedMessage.Text = "Operația a fost anulată de utilizator";
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Eroare", ex.Message, "OK");
+        }
+        finally
+        {
+            stopwatch.Stop();
+            ExecutionTime.Text = $"Timp de execuție: {stopwatch.ElapsedMilliseconds}ms";
+
+            CriptareButton.IsEnabled = true;
+            DecriptareButton.IsEnabled = true;
+            CancelButton.IsEnabled = false;
+            tokenSource?.Dispose();
+        }
     }
 
     private async void OnDecriptareClicked(object sender, EventArgs e)
     {
-        await ProcessText(false);
+        Debug.Print($"Thread ID principal: {Thread.CurrentThread.ManagedThreadId}");
+
+        var text = EncryptedMessage.Text ?? string.Empty;
+        if (string.IsNullOrEmpty(text)) return;
+
+        tokenSource = new CancellationTokenSource();
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            CriptareButton.IsEnabled = false;
+            DecriptareButton.IsEnabled = false;
+            CancelButton.IsEnabled = true;
+
+            ProcessingProgress.Progress = 0;
+            ProgressText.Text = "Progres: 0%";
+
+            var lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            var processedLines = new List<string>();
+            var totalLines = lines.Length;
+            var processedCount = 0;
+
+            foreach (var line in lines)
+            {
+                if (string.IsNullOrEmpty(line)) continue;
+
+                try
+                {
+                    var processedLine = await CriptareDecriptare.Decriptare(line, tokenSource.Token);
+                    processedLines.Add(processedLine);
+
+                    processedCount++;
+                    var progress = (double)processedCount / totalLines;
+                    ProcessingProgress.Progress = progress;
+                    ProgressText.Text = $"Progres: {progress:P0}";
+                }
+                catch (OperationCanceledException)
+                {
+                    processedLines.Add("[Operație anulată]");
+                    throw;
+                }
+            }
+
+            OriginalMessage.Text = string.Join(Environment.NewLine, processedLines);
+        }
+        catch (OperationCanceledException)
+        {
+            OriginalMessage.Text = "Operația a fost anulată de utilizator";
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Eroare", ex.Message, "OK");
+        }
+        finally
+        {
+            stopwatch.Stop();
+            ExecutionTime.Text = $"Timp de execuție: {stopwatch.ElapsedMilliseconds}ms";
+
+            CriptareButton.IsEnabled = true;
+            DecriptareButton.IsEnabled = true;
+            CancelButton.IsEnabled = false;
+            tokenSource?.Dispose();
+        }
     }
 
     private void OnCancelClicked(object sender, EventArgs e)
@@ -85,7 +209,7 @@ public partial class MainPage : ContentPage
                 string segmentPentruTask = text.Substring(startIndex, endIndex - startIndex);
                 int threadIndex = i;
 
-                var task = TF.StartNew(() =>
+                var task = Task.Factory.StartNew<Task<ProcessingResult>>(async () =>
                 {
                     Debug.Print($"În thread-ul {Thread.CurrentThread.ManagedThreadId}");
 
@@ -106,11 +230,13 @@ public partial class MainPage : ContentPage
 
                             if (isCriptare)
                             {
-                                result.Append(CriptareDecriptare.Criptare(segmentPentruTask[j].ToString()));
+                                var encryptedChar = await CriptareDecriptare.Criptare(segmentPentruTask[j].ToString(), tokenSource.Token);
+                                result.Append(encryptedChar);
                             }
                             else
                             {
-                                result.Append(CriptareDecriptare.Decriptare(segmentPentruTask[j].ToString()));
+                                var decryptedChar = await CriptareDecriptare.Decriptare(segmentPentruTask[j].ToString(), tokenSource.Token);
+                                result.Append(decryptedChar);
                             }
 
                             MainThread.BeginInvokeOnMainThread(() =>
@@ -133,7 +259,7 @@ public partial class MainPage : ContentPage
                         processingResult.WasCanceled = true;
                         return processingResult;
                     }
-                }, tokenSource.Token);
+                }, tokenSource.Token).Unwrap();
 
                 taskuri.Add(task);
             }
@@ -208,37 +334,37 @@ public partial class MainPage : ContentPage
             int charsPerTask = (text.Length + processorCount - 1) / processorCount;
             var totalChars = text.Length;
 
-            await Task.Run(() =>
+            var tasks = new List<Task>();
+
+            for (int i = 0; i < processorCount; i++)
             {
-                Parallel.For(0, processorCount, (i, state) =>
+                int startIndex = i * charsPerTask;
+                if (startIndex >= text.Length) break;
+
+                int endIndex = Math.Min(startIndex + charsPerTask, text.Length);
+                string segment = text.Substring(startIndex, endIndex - startIndex);
+                int threadIndex = i;
+
+                var task = Task.Run(async () =>
                 {
-                    Debug.Print($"În thread-ul Parallel.For: {Thread.CurrentThread.ManagedThreadId}");
-
-                    int startIndex = i * charsPerTask;
-                    if (startIndex >= text.Length) return;
-
-                    int endIndex = Math.Min(startIndex + charsPerTask, text.Length);
-                    string segment = text.Substring(startIndex, endIndex - startIndex);
-
+                    Debug.Print($"În thread-ul {Thread.CurrentThread.ManagedThreadId}");
                     StringBuilder processedSegment = new StringBuilder();
+
                     for (int j = 0; j < segment.Length; j++)
                     {
-                        if (tokenSource.Token.IsCancellationRequested)
-                        {
-                            state.Stop();
-                            HandleCancellation();
-                            return;
-                        }
+                        tokenSource.Token.ThrowIfCancellationRequested();
 
                         Thread.Sleep(100);
 
                         if (isCriptare)
                         {
-                            processedSegment.Append(CriptareDecriptare.Criptare(segment[j].ToString()));
+                            var encryptedChar = await CriptareDecriptare.Criptare(segment[j].ToString(), tokenSource.Token);
+                            processedSegment.Append(encryptedChar);
                         }
                         else
                         {
-                            processedSegment.Append(CriptareDecriptare.Decriptare(segment[j].ToString()));
+                            var decryptedChar = await CriptareDecriptare.Decriptare(segment[j].ToString(), tokenSource.Token);
+                            processedSegment.Append(decryptedChar);
                         }
 
                         MainThread.BeginInvokeOnMainThread(() =>
@@ -250,15 +376,19 @@ public partial class MainPage : ContentPage
                         });
                     }
 
-                    concurrentResults.Enqueue(processedSegment.ToString());
-                });
-            });
+                    concurrentResults.Enqueue($"{processedSegment}");
+                }, tokenSource.Token);
 
-            string result = string.Concat(concurrentResults);
+                tasks.Add(task);
+            }
+
+            await Task.WhenAll(tasks);
+
+            string result = string.Join(Environment.NewLine, concurrentResults);
             EncryptedMessage.Text = result;
 
             stopwatch.Stop();
-            ExecutionTime.Text = $"Timp de executie pentru {(isCriptare ? "criptare" : "decriptare")} Parallel.For: {stopwatch.ElapsedMilliseconds}ms";
+            ExecutionTime.Text = $"Timp de executie pentru {(isCriptare ? "criptare" : "decriptare")} Task.WhenAll: {stopwatch.ElapsedMilliseconds}ms";
         }
         catch (OperationCanceledException)
         {
@@ -273,95 +403,6 @@ public partial class MainPage : ContentPage
             HandleCompletion();
         }
     }
-
-    // private async Task ProcessTextPLINQ(bool isCriptare)
-    // {
-    //     var stopwatch = Stopwatch.StartNew();
-    //     var text = OriginalMessage.Text ?? string.Empty;
-    //     if (string.IsNullOrEmpty(text)) return;
-    //
-    //     tokenSource = new CancellationTokenSource();
-    //     regularResults.Clear();
-    //     completedTasks = 0;
-    //
-    //     ProcessingProgress.Progress = 0;
-    //     ProgressText.Text = "Progres: 0%";
-    //
-    //     CriptarePLINQButton.IsEnabled = false;
-    //     DecriptarePLINQButton.IsEnabled = false;
-    //     CancelButton.IsEnabled = true;
-    //
-    //     try
-    //     {
-    //         int processorCount = Environment.ProcessorCount;
-    //         int charsPerTask = (text.Length + processorCount - 1) / processorCount;
-    //         var totalChars = text.Length;
-    //
-    //         await Task.Run(() =>
-    //         {
-    //             var segments = Enumerable.Range(0, processorCount)
-    //                 .Select(i =>
-    //                 {
-    //                     int startIndex = i * charsPerTask;
-    //                     if (startIndex >= text.Length) return string.Empty;
-    //                     int endIndex = Math.Min(startIndex + charsPerTask, text.Length);
-    //                     return text.Substring(startIndex, endIndex - startIndex);
-    //                 })
-    //                 .Where(s => !string.IsNullOrEmpty(s));
-    //
-    //             var query = segments.AsParallel()
-    //                               .WithDegreeOfParallelism(processorCount)
-    //                               .WithCancellation(tokenSource.Token)
-    //                               .Select(segment =>
-    //                               {
-    //                                   Debug.Print($"În thread-ul PLINQ: {Thread.CurrentThread.ManagedThreadId}");
-    //                                   StringBuilder processedSegment = new StringBuilder();
-    //                                   foreach (char c in segment)
-    //                                   {
-    //                                       Thread.Sleep(100);
-    //                                       if (isCriptare)
-    //                                       {
-    //                                           processedSegment.Append(CriptareDecriptare.Criptare(c.ToString()));
-    //                                       }
-    //                                       else
-    //                                       {
-    //                                           processedSegment.Append(CriptareDecriptare.Decriptare(c.ToString()));
-    //                                       }
-    //
-    //                                       MainThread.BeginInvokeOnMainThread(() =>
-    //                                       {
-    //                                           completedTasks++;
-    //                                           double progressPercent = (double)completedTasks / totalChars;
-    //                                           ProcessingProgress.Progress = progressPercent;
-    //                                           ProgressText.Text = $"Progres: {progressPercent:P0}";
-    //                                       });
-    //                                   }
-    //                                   return processedSegment.ToString();
-    //                               });
-    //
-    //             regularResults.AddRange(query.ToList());
-    //         });
-    //
-    //         string result = string.Concat(regularResults);
-    //         EncryptedMessage.Text = result;
-    //
-    //         stopwatch.Stop();
-    //         ExecutionTime.Text = $"Timp de executie pentru {(isCriptare ? "criptare" : "decriptare")} PLINQ: {stopwatch.ElapsedMilliseconds}ms";
-    //     }
-    //     catch (OperationCanceledException)
-    //     {
-    //         HandleCancellation();
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         await DisplayAlert("Eroare", ex.Message, "OK");
-    //     }
-    //     finally
-    //     {
-    //         HandleCompletion();
-    //     }
-    // }
-
     private async void OnCriptareParallelClicked(object sender, EventArgs e)
     {
         await ProcessTextParallel(true);
@@ -372,21 +413,9 @@ public partial class MainPage : ContentPage
         await ProcessTextParallel(false);
     }
 
-    // private async void OnCriptarePLINQClicked(object sender, EventArgs e)
-    // {
-    //     await ProcessTextPLINQ(true);
-    // }
-    //
-    // private async void OnDecriptarePLINQClicked(object sender, EventArgs e)
-    // {
-    //     await ProcessTextPLINQ(false);
-    // }
-
     private void HandleCancellation()
     {
         EncryptedMessage.Text = "Operația a fost anulată de utilizator";
-        // ConcurrentResult.Text = "Operație anulată";
-        // RegularResult.Text = "Operație anulată";
         ExecutionTime.Text = "Operație anulată";
         ProcessingProgress.Progress = 0;
         ProgressText.Text = "Progres: Anulat";
@@ -398,8 +427,6 @@ public partial class MainPage : ContentPage
         DecriptareButton.IsEnabled = true;
         CriptareParallelButton.IsEnabled = true;
         DecriptareParallelButton.IsEnabled = true;
-        // CriptarePLINQButton.IsEnabled = true;
-        // DecriptarePLINQButton.IsEnabled = true;
         CancelButton.IsEnabled = false;
         tokenSource?.Dispose();
     }

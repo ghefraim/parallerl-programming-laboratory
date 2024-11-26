@@ -1,41 +1,63 @@
+using System.Diagnostics;
+
 namespace MauiApp1;
 
-public class CriptareDecriptare
+public static class CriptareDecriptare
 {
-
-    public static string Criptare(string text)
+    public static async Task<string> Criptare(string text, CancellationToken ct)
     {
-        // Simulăm o operație de durată
-        Thread.Sleep(100); // Adăugăm o întârziere de 100ms
+        Debug.Print($"Thread ID pentru criptare: {Thread.CurrentThread.ManagedThreadId}");
 
-        string encryptedText = string.Empty;
-        char randomChar;
-        Random rand = new Random();
-
-        for (int i = 0; i <= (text.Length - 1); i++)
+        return await Task.Run(() =>
         {
-            Thread.Sleep(10);
-            randomChar = (char)(rand.Next(128));
-            encryptedText += ((char)(text[i] ^ randomChar)).ToString();
-            encryptedText += ((char)(randomChar ^ (128 - i))).ToString();
-        }
+            ct.ThrowIfCancellationRequested();
 
-        return encryptedText;
+            // Simulăm o operație de durată
+            Thread.Sleep(100); // Adăugăm o întârziere de 100ms
+
+            string encryptedText = string.Empty;
+            char randomChar;
+            Random rand = new Random();
+
+            for (int i = 0; i <= (text.Length - 1); i++)
+            {
+                ct.ThrowIfCancellationRequested();
+                Thread.Sleep(10);
+                randomChar = (char)(rand.Next(128));
+                encryptedText += ((char)(text[i] ^ randomChar)).ToString();
+                encryptedText += ((char)(randomChar ^ (128 - i))).ToString();
+            }
+
+            return encryptedText;
+        }, ct);
     }
 
-    public static string Decriptare(string encryptedText)
+    public static async Task<string> Decriptare(string encryptedText, CancellationToken ct)
     {
-        string decryptedText = string.Empty;
-        char originalChar;
-        char decryptedRandomChar;
+        Debug.Print($"Thread ID pentru decriptare: {Thread.CurrentThread.ManagedThreadId}");
 
-        for (int i = 0; i < encryptedText.Length - 1; i += 2)
+        return await Task.Run(() =>
         {
-            decryptedRandomChar = (char)((encryptedText[i + 1]) ^ (128 - (i / 2)));
-            originalChar = (char)(encryptedText[i] ^ decryptedRandomChar);
-            decryptedText += originalChar;
-        }
+            ct.ThrowIfCancellationRequested();
 
-        return decryptedText;
+
+            // Simulăm o operație de durată
+            Thread.Sleep(100); // Adăugăm o întârziere de 100ms
+
+            string decryptedText = string.Empty;
+            char originalChar;
+            char decryptedRandomChar;
+
+            for (int i = 0; i < encryptedText.Length - 1; i += 2)
+            {
+                ct.ThrowIfCancellationRequested();
+                Thread.Sleep(10);
+                decryptedRandomChar = (char)((encryptedText[i + 1]) ^ (128 - (i / 2)));
+                originalChar = (char)(encryptedText[i] ^ decryptedRandomChar);
+                decryptedText += originalChar;
+            }
+
+            return decryptedText;
+        }, ct);
     }
 }
