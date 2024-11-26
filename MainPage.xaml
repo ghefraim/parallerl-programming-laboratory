@@ -12,6 +12,7 @@
                 FontSize="32"
                 HorizontalOptions="Center" />
 
+            <!-- Input Section -->
             <Label 
                 Text="Text de procesat (introduceți mai multe linii)"
                 FontSize="18"/>
@@ -28,6 +29,7 @@
                 </ScrollView>
             </Border>
 
+            <!-- Output Section -->
             <Label 
                 Text="Text procesat"
                 FontSize="18"/>
@@ -43,6 +45,7 @@
                 </ScrollView>
             </Border>
 
+            <!-- Progress Section -->
             <ProgressBar 
                 x:Name="ProcessingProgress"
                 Progress="0"
@@ -56,28 +59,90 @@
                 FontSize="14"
                 HorizontalOptions="Center"/>
 
-            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
-                <Button
-                    x:Name="CriptareButton"
-                    Text="Criptare TPL"
-                    SemanticProperties.Hint="Criptează textul folosind Task Parallel Library"
-                    Clicked="OnCriptareClicked"
-                    HorizontalOptions="Center" />
+            <!-- TaskFactory Implementation Section -->
+            <Frame BorderColor="Gray" Padding="10" Margin="0,10">
+                <VerticalStackLayout Spacing="10">
+                    <Label 
+                        Text="Implementare cu TaskFactory"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"/>
+                    
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button
+                            x:Name="CriptareButton"
+                            Text="Criptare TPL"
+                            SemanticProperties.Hint="Criptează textul folosind Task Parallel Library"
+                            Clicked="OnCriptareClicked"/>
 
-                <Button
-                    x:Name="DecriptareButton"
-                    Text="Decriptare TPL"
-                    SemanticProperties.Hint="Decriptează textul folosind Task Parallel Library"
-                    Clicked="OnDecriptareClicked"
-                    HorizontalOptions="Center" />
+                        <Button
+                            x:Name="DecriptareButton"
+                            Text="Decriptare TPL"
+                            SemanticProperties.Hint="Decriptează textul folosind Task Parallel Library"
+                            Clicked="OnDecriptareClicked"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
 
+            <!-- Parallel.For Implementation Section -->
+            <Frame BorderColor="Gray" Padding="10" Margin="0,10">
+                <VerticalStackLayout Spacing="10">
+                    <Label 
+                        Text="Implementare cu Parallel.For și ConcurrentQueue"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"/>
+                    
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button 
+                            x:Name="CriptareParallelButton"
+                            Text="Criptare (Parallel.For)"
+                            SemanticProperties.Hint="Criptează textul folosind Parallel.For"
+                            Clicked="OnCriptareParallelClicked"/>
+
+                        <Button 
+                            x:Name="DecriptareParallelButton"
+                            Text="Decriptare (Parallel.For)"
+                            SemanticProperties.Hint="Decriptează textul folosind Parallel.For"
+                            Clicked="OnDecriptareParallelClicked"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- PLINQ Implementation Section -->
+            <!-- <Frame BorderColor="Gray" Padding="10" Margin="0,10">
+                <VerticalStackLayout Spacing="10">
+                    <Label 
+                        Text="Implementare cu PLINQ"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"/>
+                    
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button 
+                            x:Name="CriptarePLINQButton"
+                            Text="Criptare (PLINQ)"
+                            SemanticProperties.Hint="Criptează textul folosind PLINQ"
+                            Clicked="OnCriptarePLINQClicked"/>
+
+                        <Button 
+                            x:Name="DecriptarePLINQButton"
+                            Text="Decriptare (PLINQ)"
+                            SemanticProperties.Hint="Decriptează textul folosind PLINQ"
+                            Clicked="OnDecriptarePLINQClicked"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame> -->
+
+            <!-- Cancel Button Section -->
+            <Frame BorderColor="Gray" Padding="10" Margin="0,10">
                 <Button
                     x:Name="CancelButton"
                     Text="Anulează"
                     IsEnabled="False"
                     Clicked="OnCancelClicked"
                     HorizontalOptions="Center" />
-            </HorizontalStackLayout>
+            </Frame>
 
             <Label 
                 x:Name="ExecutionTime"
